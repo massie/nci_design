@@ -105,10 +105,13 @@ ADAM provides a platform for biological data analysis as well as a `CLI` for bas
 
 There are other projects that build on ADAM to provide more functionality.
 
-* [RNAdam](https://github.com/bigdatagenomics/RNAdam) provides an RNA pipeline on top of ADAM
-* [Avocado](https://github.com/bigdatagenomics/avocado) is a variant caller built on top of ADAM
-* [PacMin](https://github.com/bigdatagenomics/PacMin) is an assembler for PacBio reads
-* A `Mutect` port is nearly complete
+* [RNAdam](https://github.com/bigdatagenomics/RNAdam) provides an RNA pipeline on top of ADAM with isoform quantification and fusion transcription detection,
+* [Avocado](https://github.com/bigdatagenomics/avocado) is a variant caller built on top of ADAM for germline and somatic calling,
+* [PacMin](https://github.com/bigdatagenomics/PacMin) is an assembler for PacBio reads,
+* A `Mutect` port is nearly complete,
+* Read error correction,
+* [Short read assembly](http://www.github.com/fnothaft/xASSEMBLYx)
+* Variant filtration (train model via `MLlib`)
 
 All these project are shared using an Apache 2.0 licensed.
 
