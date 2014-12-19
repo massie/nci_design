@@ -6,20 +6,20 @@
 
 ADAM is a genome analysis platform built using Apache [Hadoop](http://hadoop.apache.org), [Spark](http://spark.apache.org), [Parquet](http://parquet.io) and [Avro](http://avro.apache.org). All software that ADAM requires is licensed under Apache 2.0 and ADAM itself is shared with a permissive Apache 2.0 license.
 
-These systems provide many benefits when used together, since they:
+These systems provide many benefits when used together.
 
-* allow developers to focus on algorithms without needing to worry about distributed systems failures, data locality, on-disk formats (Spark),
-* enable jobs to be run locally on a single machine, on an in-house cluster or in the cloud *without changing code* (Spark), 
-* compress legacy genomic formats using standard columnar techniques (e.g. RLE, dictionary encoding) and provide predicate pushdown and projection for performance (Parquet),
-* provide an agile way of customizing and evolving data formats over time (Avro/Parquet),
-* are designed to easily scale out using only commodity hardware (Spark/Hadoop),
-* are shared with a standard Apache 2.0 license.
+* Spark allows developers to focus on algorithms without needing to worry about distributed systems failures, data locality, on-disk formats, etc.,
+* Spark enable jobs to be run locally on a single machine, on an in-house cluster or in the cloud *without modifications*,
+* Parquet compresss legacy genomic formats using standard columnar techniques (e.g. RLE, dictionary encoding) and provide predicate pushdown and projection for performance,
+* Avro and Parquet provide an agile way of customizing and evolving data formats over time,
+* Spark and Hadoop are designed to scale linearly on commodity hardware,
+* All systems are shared with a standard Apache 2.0 license.
 
 Here's a sample snippet of code to count *k*-mers using ADAM, e.g.
 
 ```scala
 // Load reads from 'inputPath' into an RDD for analysis
-val adamRecords: RDD[AlignmentRecord] = sc.adamLoad(args.inputPath,
+val adamRecords: RDD[AlignmentRecord] = sc.loadAlignments(args.inputPath,
   // Filter out all low quality reads that failed vendor quality checks
   predicate = Some(classOf[HighQualityReadsPredicate]),
   // Only materialize the 'sequence' from each record
@@ -41,7 +41,7 @@ kmers.map { case (kmer, count) => s"$count,$kmer"}
   .saveAsTextFile(args.outputPath)
 ```
 
-When run on sample `NA21144` chromosome 11 in the 1000 Genomes project, this job outputs:
+When run on sample `NA21144`, chromosome 11 from the 1000 Genomes project, this job outputs:
 
 ```
 AAAAAAAAAAAAAAAAAAAAAA, 124069
@@ -81,7 +81,7 @@ There is also an assumption that the people deploying ADAM are experienced at de
 
 # System Design
 
-The ADAM design emphasizes separation of concerns and clean interfaces between layers allowing users maximum flexibility at deployment. For example, ADAM supports both Hadoop 1.x and Hadoop 2.x on all major Hadoop distributions (e.g. Cloudera, MapR, Apache) and runs well on Amazon, Google and Microsoft clouds without needing to modify code. The physical and block layers can be changed without effecting the layers above.
+The ADAM design emphasizes separation of concerns and clean interfaces between layers allowing users maximum flexibility at deployment. For example, ADAM supports both Hadoop 1.x and Hadoop 2.x and runs on Amazon, Google and Microsoft clouds without needing to modify code. The physical and block layers can be changed without effecting the layers above.
 
 ![The Layered Designed of ADAM](images/layers.png)
 
@@ -93,72 +93,15 @@ Parquet was chosen as a storage format because it allows access to the data *out
 
 This openness allows users to access ADAM data as a graph, a SQL table (using e.g. Impala or SparkSQL), an `RDD` of in-memory records and use the built-in machine learning in Spark, `MLlib`.  Users are not locked into a specific framework for analysis and can use their favorite environment for processing ADAM data.
 
-The [Google Dataflow](https://github.com/GoogleCloudPlatform/DataflowJavaSDK) JavaSDK is an implementation of the `FlumeJava` [API](http://pages.cs.wisc.edu/~akella/CS838/F12/838-CloudPapers/FlumeJava.pdf) which currently only runs on data in the Google Cloud. Any alternative Apache-licensed implementation of `FlumeJava` is [Apache Crunch](http://crunch.apache.org) which supports building workflows in-memory (on a single node), on Hadoop MapReduce or Apache Spark.
+The [Google Dataflow](https://github.com/GoogleCloudPlatform/DataflowJavaSDK) JavaSDK is an implementation of the `FlumeJava` [API](http://pages.cs.wisc.edu/~akella/CS838/F12/838-CloudPapers/FlumeJava.pdf) which currently only runs on data in the Google Cloud. Any alternative Apache-licensed implementation of `FlumeJava` is [Apache Crunch](http://crunch.apache.org) which supports building workflows in-memory (on a single node), on Hadoop MapReduce or Apache Spark. It would be possible to run ADAM as part of an Apache Crunch workflow.
 
 There are also more details about the ADAM design in the Berkeley tech report [ADAM: Genomics Formats and Processing Patterns for Cloud Scale Computing](http://www.eecs.berkeley.edu/Pubs/TechRpts/2013/EECS-2013-207.pdf).
 
 ## Use-Cases
 
-ADAM provides a platform for biological data analysis as well as a `CLI` for basic operations, e.g.
+ADAM provides a platform for biological data analysis as well as a `CLI` for basic operations (see Figure 2 below). There are commands for comparing files, finding reads, calculating depth, converting data, executing ADAM plugins, printing statistics, generating *k*-mer and *q*-mer counts, calculating allele counts, visualizing reads via an embedded genome browser, etc. The `transform` command does more than just convert from BAM to ADAM but also includes sorting, mark duplicates, base quality score recalibration and indel realignment pre-processing methods to convert aligned reads into analysis-ready reads. The `transform` command is Extract-Transform-Load (ETL) component of ADAM.
 
-```text
-$ adam-submit
-
-     e            888~-_              e                 e    e
-    d8b           888   \            d8b               d8b  d8b
-   /Y88b          888    |          /Y88b             d888bdY88b
-  /  Y88b         888    |         /  Y88b           / Y88Y Y888b
- /____Y88b        888   /         /____Y88b         /   YY   Y888b
-/      Y88b       888_-~         /      Y88b       /          Y888b
-
-Choose one of the following commands:
-
-ADAM ACTIONS
-             compare : Compare two ADAM files based on read name
-           findreads : Find reads that match particular individual 
-		               or comparative criteria
-               depth : Calculate the depth from a given ADAM file, at 
-			           each variant in a VCF
-         count_kmers : Counts the k-mers/q-mers from a read dataset.
-           transform : Convert SAM/BAM to ADAM format and optionally 
-		               perform read pre-processing transformations
-          adam2fastq : Convert BAM to FASTQ files
-              plugin : Executes an ADAMPlugin
-
-CONVERSION OPERATIONS
-            bam2adam : Single-node BAM to ADAM converter (Note: the 
-			           'transform' command can take SAM or BAM as input)
-    vcf2flatgenotype : Single-node VCF to flat-schema'd ADAM converter
-            vcf2adam : Convert a VCF file to the corresponding ADAM format
-           anno2adam : Convert a annotation file (in VCF format) to the 
-		               corresponding ADAM format
-            adam2vcf : Convert an ADAM variant to the VCF ADAM format
-          fasta2adam : Converts a text FASTA sequence file into an 
-		               ADAMNucleotideContig Parquet file
-           reads2ref : Convert an ADAM read-oriented file to an ADAM 
-		               reference-oriented file
-             mpileup : Output the samtool mpileup text from ADAM 
-			           reference-oriented data
-       features2adam : Convert a file with sequence features into 
-	                   corresponding ADAM format
-
-PRINT
-               print : Print an ADAM formatted file
-         print_genes : Load a GTF file containing gene annotations and 
-		               print the corresponding gene models
-            flagstat : Print statistics on reads in an ADAM file 
-			           (similar to samtools flagstat)
-                 viz : Generates images from sections of the genome
-          print_tags : Prints the values and counts of all tags in a 
-		               set of records
-            listdict : Print the contents of an ADAM sequence dictionary
- summarize_genotypes : Print statistics of genotypes and variants in an ADAM file
-         allelecount : Calculate Allele frequencies
-           buildinfo : Display build information (use this for bug reports)
-                view : View certain reads from an alignment-record file.
-```
-
-There are commands for comparing files, finding reads, calculating depth, converting data, executing ADAM plugins, printing statistics, generating *k*-mer and *q*-mer counts, calculating allele counts, visualizing reads via an embedded genome browser, etc. The `transform` command does more than just convert from BAM to ADAM but also includes sorting, mark duplicates, base quality score recalibration and indel realignment pre-processing methods to convert aligned reads into analysis-ready reads. The `transform` command is Extract-Transform-Load (ETL) component of ADAM.
+![The ADAM CLI](images/cmdline.png)
 
 There are other projects that build on ADAM to provide more functionality.
 
@@ -173,11 +116,11 @@ ADAM has also used for [*k*-means for population stratification](http://bdgenomi
 
 ## Database Design
 
-ADAM uses Apache [Avro](http://avro.apache.org/) and [Parquet](http://parquet.io) for serialization, storage and querying of data. All ADAM objects are explicitly defined [on github](https://github.com/bigdatagenomics/bdg-formats/blob/master/src/main/resources/avro/bdg.avdl) in [Avro IDL](http://avro.apache.org/docs/1.7.5/idl.html). The ADAM build system, Maven, uses the `avro-maven-plugin` to automatically generate Java code for the defined objects. Avro can also generates code in C++, Python, Ruby, etc.
+ADAM uses Apache [Avro](http://avro.apache.org/) and [Parquet](http://parquet.io) for serialization, storage and querying of data. All ADAM objects are explicitly defined [on github](https://github.com/bigdatagenomics/bdg-formats/blob/master/src/main/resources/avro/bdg.avdl) in [Avro IDL](http://avro.apache.org/docs/1.7.5/idl.html). The ADAM build system, Maven, uses the `avro-maven-plugin` to automatically generate Java code for the defined objects. Avro can also generate code in C++, Python, Ruby, etc.
 
 Parquet integrates well with Avro. It converts the Avro schema into Parquet schema to store Avro objects inside of the Parquet columnar container file. Alex Holmes has [a great blog post](http://grepalex.com/2014/05/13/parquet-file-format-and-object-model/) with the details of how this integration works for Avro, Thrift and Protocol Buffers.
 
-Parquet support pushdown predicates and schema projection to allow developers to only materialize the data they need, since (de)serialization is expensive and minimizing it has a dramatic effect on performance.
+Parquet support pushdown predicates and schema projection to allow developers to only materialize the data they need, since (de)serialization is expensive.
 
 ![Predicates and Projection in Parquet](images/parquet.png)
 
@@ -199,23 +142,17 @@ ADAM jobs can be monitored and killed using the Spark UI which by default run on
 
 This UI allows users to track the progress and performance of jobs in flight including the exact line of code being run, shuffle sizes, environment variables, executor memory, etc.
 
-ADAM also has a simple genome browser which can be started by running, e.g. `adam-submit viz myreads.adam chr1`, which can scale to [handle high-coverage files](https://cloud.githubusercontent.com/assets/4754931/3831402/0faf3264-1d93-11e4-8cca-5c699e0e7c74.png)
-
 [Spark Notebook](https://github.com/andypetrella/spark-notebook) provides an iPython/[Project Jupyter](http://jupyter.org/)-like, user interface to creating, launching and visualizing ADAM workflows. This workflows can be saved and shared between users. The [Spark Notebook `README`](https://github.com/andypetrella/spark-notebook) provides example of the visualization and how to integrate with ADAM.
 
 ## Performance
 
 ADAM is built on Hadoop, Spark, Parquet and Avro. ADAM performance benefits immediately from updates to those underlying technologies. For example, [Databricks](http://databricks.com/), a Spark startup spun out the [AMPLab](https://amplab.cs.berkeley.edu/), recently announced that it [crushed the Daytona GraySort record](http://databricks.com/blog/2014/11/05/spark-officially-sets-a-new-record-in-large-scale-sorting.html) achieving a **3x** boost in performance using **10x** less machines. Moreover, Databricks used Amazon EC2 instead of bare metals machines which were used for all previous GraySort records. All the performance improvements they added to win this benchmark were folded back into the open-source implementation of Spark to benefit the community (and ADAM).
 
-Here are some specific performance numbers for ADAM `0.9.0`:
+![Speedup as a function of cores](images/speedup.png)
 
-![Performance of Sort, MarkDups, BQSR](images/performance.png)
-
-For comparison, Bina Technologies quotes .94 hours for BQSR at only 37x coverage.
+Figure 5 demonstrates how the ADAM design benefits from the horizontal scalability of Spark.
 
 For more details about the ADAM performance, see the Berkeley tech report [ADAM: Genomics Formats and Processing Patterns for Cloud Scale Computing](http://www.eecs.berkeley.edu/Pubs/TechRpts/2013/EECS-2013-207.pdf).
-
-These performance numbers are outdated and there have been a number of performance improvements since `0.9.0`; however, the focus of the team now is on concordance and accuracy.
 
 It should be noted that performance is influenced by the underlying block/physical layers. While ADAM can integrate with any data source, the performance will vary especially when processing is not data local.
 
