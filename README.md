@@ -162,4 +162,4 @@ It should be noted that performance is influenced by the underlying block/physic
 ## Technologies to Evaluate and Criteria
 
 1. Evaluate [Apache Crunch](http://crunch.apache.org) as a workflow for ADAM to allows users to run on any cloud vendor, in-house or on a single machine.
-2. Create a Hadoop `InputFormat` for some of the current data source at The Broad Institute to demonstrate ease of integration. ADAM can read from any data source that provides an `InputFormat`. An alternative would be to 
+2. Create a Hadoop `InputFormat` for some of the current data source at The Broad Institute to demonstrate ease of integration. ADAM can read from any data source that provides an `InputFormat`. 
