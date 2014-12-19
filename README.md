@@ -110,7 +110,7 @@ There are other projects that build on ADAM to provide more functionality.
 * [PacMin](https://github.com/bigdatagenomics/PacMin) is an assembler for PacBio reads,
 * A `Mutect` port is nearly complete,
 * Read error correction,
-* [Short read assembly](http://www.github.com/fnothaft/xASSEMBLYx)
+* [Short read assembly](http://www.github.com/fnothaft/xASSEMBLEx)
 * Variant filtration (train model via `MLlib`)
 
 All these project are shared using an Apache 2.0 licensed.
