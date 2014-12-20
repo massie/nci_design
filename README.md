@@ -75,13 +75,13 @@ Once compiled, this code can be run on a laptop, a cluster of machines on Amazon
 
 # Assumptions/ Constraints/ Standards
 
-Parquet data can be accessed by Java and C. Since ADAM is written in Scala, we haven't done much testing of the C support. However, the C library used by Cloudera to read Parquet into Impala is open-source and broadly used and mature. We assume that multi-language support will be straight-forward but that is just an assumption.
+Parquet data can be accessed by Java and C. Since ADAM is written in Scala, we haven't done much testing of the C support. However, the C library used by Cloudera to read Parquet into Impala is open-source and broadly used and mature. We assume that multi-language support will be straightforward but that is just an assumption.
 
 There is also an assumption that the people deploying ADAM are experienced at devops and that the people writing new methods are experienced with big data systems. Over time, we hope to provide better documentation and utilities to help less experienced users. Misconfiguration is a problem with distributed systems in general and ADAM is not an exception, e.g. block size mismatch between `HDFS` filesystem and `Parquet` files increases data movement at shuffle.
 
 # System Design
 
-The ADAM design emphasizes separation of concerns and clean interfaces between layers allowing users maximum flexibility at deployment. For example, ADAM supports both Hadoop 1.x and Hadoop 2.x and runs on Amazon, Google and Microsoft clouds without needing to modify code. The physical and block layers can be changed without effecting the layers above.
+The ADAM design emphasizes separation of concerns and clean interfaces between layers allowing users maximum flexibility at deployment. For example, ADAM supports both Hadoop 1.x and Hadoop 2.x and runs on Amazon, Google and Microsoft clouds without needing to modify code. The physical and block layers can be changed without affecting the layers above.
 
 ![The Layered Designed of ADAM](images/layers.png)
 
@@ -110,6 +110,8 @@ There are other projects that build on ADAM to provide more functionality.
 * [PacMin](https://github.com/bigdatagenomics/PacMin) is an assembler for PacBio reads,
 * A `Mutect` port is nearly complete,
 * Read error correction,
+* a graphing and genome visualization library,
+* [BDG-Services](https://github.com/bigdatagenomics/bdg-services) is a library for accessing a running Spark cluster through web-services or a [Thrift](https://thrift.apache.org/)-interface,
 * [Short read assembly](http://www.github.com/fnothaft/xASSEMBLEx)
 * Variant filtration (train model via `MLlib`)
 
