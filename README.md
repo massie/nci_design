@@ -110,6 +110,8 @@ There are other projects that build on ADAM to provide more functionality.
 * [PacMin](https://github.com/bigdatagenomics/PacMin) is an assembler for PacBio reads,
 * A `Mutect` port is nearly complete,
 * Read error correction,
+* a graphing and genome visualization library,
+* [BDG-Services](https://github.com/bigdatagenomics/bdg-services) is a library for accessing a running Spark cluster through web-services or a [Thrift](https://thrift.apache.org/)-interface,
 * [Short read assembly](http://www.github.com/fnothaft/xASSEMBLEx)
 * Variant filtration (train model via `MLlib`)
 
